@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tugas 9 v2 — Portal Kampus</title>
+<style>
+:root{--bg:#f3f7f6;--fg:#12302c;--mu:#5d7a75;--cd:#fff;--bd:#d4e3e0;--ac:#0f9d8a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1715;--fg:#e2f2ef;--mu:#8fb0aa;--cd:#132522;--bd:#24403b}}
+:root[data-theme="dark"]{--bg:#0c1715;--fg:#e2f2ef;--mu:#8fb0aa;--cd:#132522;--bd:#24403b}
+html,body{height:100%}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;display:flex;flex-direction:column}
+.top{background:var(--ac);color:#fff;padding:14px 16px}.top b{font-size:18px}.top small{display:block;opacity:.85}
+.url{font:12px monospace;background:var(--cd);border-bottom:1px solid var(--bd);padding:7px 14px;overflow-x:auto;white-space:nowrap;color:var(--mu)}
+main{flex:1;overflow-y:auto;padding:14px;max-width:700px;width:100%;margin:auto;box-sizing:border-box}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mk{border-left:5px solid var(--ac)}.mk b{display:block}.mk small{color:var(--mu)}
+nav{display:flex;border-top:1px solid var(--bd);background:var(--cd);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;border:0;background:none;color:var(--mu);padding:10px 4px;font:inherit;font-size:12px}
+nav button span{display:block;font-size:20px}nav button.on{color:var(--ac);font-weight:700}
+input{font:inherit;padding:9px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box}
+h2{font-size:16px;margin:16px 0 8px}h1{font-size:21px;margin:0 0 6px}
+pre{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px;overflow-x:auto;font-size:12px;margin:6px 0}
+details summary{font-weight:600;padding:6px 0}
+.bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+li{margin:3px 0}
+</style></head><body>
+<div class="top"><b>🎓 Portal Kampus</b><small>Tugas Rutin 9 — Setup Laravel (simulasi)</small></div>
+<div class="url" id="url"></div>
+<main id="m"></main>
+<nav id="nav"></nav>
+
+<script>
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const matkul=[{n:'Pemrograman Web',s:3,d:'Rabu 08.00'},{n:'Basis Data',s:3,d:'Kamis 10.00'},{n:'Algoritma',s:2,d:'Senin 13.00'},{n:'Jaringan Komputer',s:3,d:'Selasa 09.00'}];
+let nama='Rina',tab='/';
+const tabs=[['/','🏠','Beranda'],['/about','ℹ️','About'],['/contact','✉️','Contact'],['/hello/{nama}','👋','Hello'],['/info','📄','README']];
+const code=(t,c)=>`<details><summary>${t}</summary><pre>${esc(c)}</pre></details>`;
+const views={
+'/':()=>`<div class="card"><h1>Halo, Mahasiswa! 👋</h1><small>Data dari array di route → Blade @foreach. Total ${matkul.reduce((a,b)=>a+b.s,0)} SKS.</small></div><div class="grid">${matkul.map(k=>`<div class="card mk"><b>${esc(k.n)}</b><small>${k.s} SKS · ${esc(k.d)}</small></div>`).join('')}</div>`+
+ code('routes/web.php',`Route::get('/', function () {
+    return view('welcome', [
+        'matkul' => [
+            ['n'=>'Pemrograman Web','s'=>3,'d'=>'Rabu 08.00'],
+            ['n'=>'Basis Data','s'=>3,'d'=>'Kamis 10.00'],
+        ],
+    ]);
+});`)+code('welcome.blade.php',`@foreach ($matkul as $k)
+  <div>{{ $k['n'] }} — {{ $k['s'] }} SKS</div>
+@endforeach`),
+'/about':()=>`<div class="card"><h1>Tentang Portal</h1><p>Portal kecil untuk belajar Laravel: route, controller, dan Blade view. Dibuat untuk mata kuliah Pemrograman Web FMIPA UNIMED.</p><small>PageController@about</small></div>`+code('PageController.php',`public function about()
+{
+    return view('about');
+}`),
+'/contact':()=>`<div class="card"><h1>Kontak</h1><p>📧 admin@portal.test<br>📍 Gedung FMIPA, Medan</p><small>PageController@contact</small></div>`+code('routes/web.php',`Route::get('/about', [PageController::class, 'about']);
+Route::get('/contact', [PageController::class, 'contact']);`),
+'/hello/{nama}':()=>`<div class="card"><h1>Halo, ${esc(nama)}! 👋</h1><input id="n" value="${esc(nama)}" placeholder="Ketik nama"><br><br><button onclick="nama=document.getElementById('n').value||'Rina';draw()" style="padding:9px 14px;border-radius:10px;border:0;background:var(--ac);color:#fff;font:inherit">Ubah</button><p><small>Bonus route parameter. {{ $nama }} otomatis di-escape (aman XSS).</small></p></div>`+code('routes/web.php',`Route::get('/hello/{nama}', function ($nama) {
+    return view('hello', compact('nama'));
+});`),
+'/info':()=>`<div class="card"><b>✅ Progress requirement: 8/8</b><div class="bar"><i style="width:100%"></i></div><ol><li>Composer & create-project</li><li>DB phpMyAdmin + .env mysql</li><li>artisan serve</li><li>3 route custom</li><li>Data dinamis</li><li>make:controller & make:model -m</li><li>README</li><li>Repo TugasWeb-P9-LaravelSetup</li></ol></div>`+
+ code('README — langkah install',`composer create-project laravel/laravel portal
+cd portal
+# buat DB portal_db di phpMyAdmin, lalu edit .env:
+DB_CONNECTION=mysql
+DB_DATABASE=portal_db
+DB_USERNAME=root
+DB_PASSWORD=
+php artisan make:controller PageController
+php artisan make:model Matkul -m
+php artisan serve`)+code('README — struktur folder',`app/Http/Controllers  → Controller (C)
+app/Models            → Model (M)
+resources/views       → Blade view (V)
+routes/web.php        → peta URL
+database/migrations   → skema database
+public/               → document root
+.env                  → konfigurasi rahasia`)};
+function draw(){
+ document.getElementById('m').innerHTML=views[tab]();
+ document.getElementById('url').textContent='127.0.0.1:8000'+(tab==='/hello/{nama}'?'/hello/'+nama:tab==='/info'?'/README':tab);
+ document.getElementById('nav').innerHTML=tabs.map(t=>`<button class="${t[0]===tab?'on':''}" onclick="tab='${t[0]}';draw()"><span>${t[1]}</span>${t[2]}</button>`).join('');
+}
+draw();
+</script></body></html>
